@@ -1,0 +1,39 @@
+{
+  "name": "family-tree",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Интерактивный конструктор герба семьи для групповых психологических практик",
+  "license": "MIT",
+  "scripts": {
+    "symbols": "node scripts/build-symbols.ts",
+    "dev": "npm run symbols && vite",
+    "build": "npm run symbols && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "pretypecheck": "npm run symbols",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run symbols",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource/cormorant": "^5.3.0",
+    "@fontsource/pt-serif": "^5.3.0",
+    "jspdf": "^4.2.1",
+    "opentype.js": "^2.0.0",
+    "preact": "^11.1.1",
+    "svg2pdf.js": "^2.9.0"
+  },
+  "devDependencies": {
+    "@iconify-json/game-icons": "^1.2.4",
+    "@playwright/test": "^1.64.1",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
