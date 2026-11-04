@@ -19,9 +19,14 @@ describe('проверка данных', () => {
   test('чужие и повреждённые файлы отвергаются', () => {
     expect(fromFile('не json')).toBeNull();
     expect(fromFile('{"app":"other","doc":{}}')).toBeNull();
-    expect(fromFile('{"app":"family-tree","doc":{"layers":5}}')).toBeNull();
+    expect(fromFile('{"app":"family-crest","doc":{"layers":5}}')).toBeNull();
     expect(parseDoc(null)).toBeNull();
     expect(parseDoc([])).toBeNull();
+  });
+
+  test('файлы со старым именем приложения открываются', () => {
+    const doc = parseDoc({})!;
+    expect(fromFile(JSON.stringify({ app: 'family-tree', doc }))).toEqual(doc);
   });
 
   test('значения приводятся к допустимым, неизвестное отбрасывается', () => {

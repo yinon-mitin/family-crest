@@ -1,8 +1,8 @@
-# Герб семьи
+# Family crest
 
 Интерактивный конструктор герба семьи для групповых психологических практик. Участник собирает герб из рабочих сфер, животных, природы, символов, орнаментов и цветов и скачивает его в **PNG**, **PDF** и **SVG**.
 
-**Сайт:** https://yinon-mitin.github.io/family-tree/
+**Сайт:** https://yinon-mitin.github.io/family-crest/
 
 ## Что умеет
 
@@ -44,7 +44,7 @@ scripts/build-symbols.ts   отбирает значки из game-icons в src/
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/family-tree/
+npm run dev        # http://localhost:5173/family-crest/
 npm test           # модульные тесты (Vitest)
 npm run e2e        # сквозные тесты (Playwright), сами собирают сайт
 npm run build      # проверка типов и сборка в dist/
@@ -54,7 +54,7 @@ npm run build      # проверка типов и сборка в dist/
 
 ## Публикация
 
-При каждом пуше в `main` GitHub Actions проверяет типы, гоняет тесты, собирает сайт и публикует его на GitHub Pages (`.github/workflows/deploy.yml`). В настройках репозитория: Settings → Pages → Source: **GitHub Actions**. Адрес сайта задан в `vite.config.ts` (`base: '/family-tree/'`).
+При каждом пуше в `main` GitHub Actions проверяет типы, гоняет тесты, собирает сайт и публикует его на GitHub Pages (`.github/workflows/deploy.yml`). В настройках репозитория: Settings → Pages → Source: **GitHub Actions**. Адрес сайта задан в `vite.config.ts` (`base: '/family-crest/'`).
 
 ## Лицензии и авторы
 

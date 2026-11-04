@@ -7,7 +7,7 @@ export async function exportPdf(doc: CrestDoc, withStory: boolean): Promise<Blob
   pdf.setProperties({
     title: doc.family ? `Герб семьи ${doc.family}` : 'Герб семьи',
     subject: 'Герб семьи',
-    creator: 'Герб семьи (family-tree)',
+    creator: 'Герб семьи (family-crest)',
   });
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden';

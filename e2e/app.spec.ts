@@ -14,7 +14,7 @@ async function openBlank(page: Page) {
 
 async function autosaved(page: Page) {
   await page.waitForTimeout(700);
-  return page.evaluate(() => JSON.parse(localStorage.getItem('family-tree:autosave:v1') ?? 'null'));
+  return page.evaluate(() => JSON.parse(localStorage.getItem('family-crest:autosave:v1') ?? 'null'));
 }
 
 async function addSymbol(page: Page, name: string) {
@@ -198,5 +198,5 @@ test('стереть мои данные очищает хранилище', asy
   await page.goto('./');
   await page.getByRole('button', { name: 'Стереть мои данные' }).click();
   await page.waitForTimeout(300);
-  expect(await page.evaluate(() => localStorage.getItem('family-tree:autosave:v1'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('family-crest:autosave:v1'))).toBeNull();
 });

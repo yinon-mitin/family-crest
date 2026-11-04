@@ -16,8 +16,10 @@ import { PATTERNS } from '../render/patterns.ts';
 import { DIVISIONS, SHAPES } from '../render/shields.ts';
 import { newId } from './doc.ts';
 
-const STORAGE_KEY = 'family-tree:autosave:v1';
-const FILE_APP = 'family-tree';
+const STORAGE_KEY = 'family-crest:autosave:v1';
+const LEGACY_STORAGE_KEY = 'family-tree:autosave:v1';
+const FILE_APP = 'family-crest';
+const LEGACY_FILE_APP = 'family-tree';
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const num = (v: unknown, def: number, min: number, max: number): number =>
@@ -130,7 +132,7 @@ export const toFile = (doc: CrestDoc): string => JSON.stringify({ app: FILE_APP,
 export function fromFile(text: string): CrestDoc | null {
   try {
     const data: unknown = JSON.parse(text);
-    if (!isObj(data) || data.app !== FILE_APP) return null;
+    if (!isObj(data) || (data.app !== FILE_APP && data.app !== LEGACY_FILE_APP)) return null;
     return parseDoc(data.doc);
   } catch {
     return null;
@@ -149,7 +151,7 @@ export function saveAuto(doc: CrestDoc): void {
 
 export function loadAuto(): CrestDoc | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     return raw ? parseDoc(JSON.parse(raw)) : null;
   } catch {
     return null;
@@ -159,6 +161,7 @@ export function loadAuto(): CrestDoc | null {
 export function clearAuto(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
     /* см. выше */
   }

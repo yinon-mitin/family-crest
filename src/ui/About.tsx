@@ -31,7 +31,7 @@ export function About({ onClose }: { onClose(): void }) {
         </li>
         <li>Шрифты PT Serif и Cormorant — лицензия SIL OFL 1.1.</li>
         <li>
-          Код сайта — лицензия MIT, <a href="https://github.com/yinon-mitin/family-tree" target="_blank" rel="noopener">исходный код на GitHub</a>.
+          Код сайта — лицензия MIT, <a href="https://github.com/yinon-mitin/family-crest" target="_blank" rel="noopener">исходный код на GitHub</a>.
         </li>
       </ul>
     </Modal>
