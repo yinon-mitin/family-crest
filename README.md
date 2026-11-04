@@ -1,63 +1,84 @@
 # Family crest
 
-Интерактивный конструктор герба семьи для групповых психологических практик. Участник собирает герб из рабочих сфер, животных, природы, символов, орнаментов и цветов и скачивает его в **PNG**, **PDF** и **SVG**.
+An interactive family crest builder for group psychology practice. Participants put together a crest from lines of work, animals, nature, symbols, ornaments and colors, then download it as **PNG**, **PDF** or **SVG**.
 
-**Сайт:** https://yinon-mitin.github.io/family-crest/
+**Live site:** https://yinon-mitin.github.io/family-crest/
 
-## Что умеет
+The interface is available in **Russian** (default) and **English**. Switch with the RU / EN button in the corner; the choice is remembered in the browser, and `?lang=en` in the address opens the English version directly.
 
-- **Два старта:** чистый лист с полной свободой или один из 8 шаблонов. Шаблон — обычный герб, в нём можно изменить или удалить всё.
-- **Щит:** 8 форм, 9 делений на поля, 8 узоров, 12 цветов (7 классических геральдических) и свой цвет.
-- **Каталог:** около 270 символов в категориях «рабочие сферы», «животные», «природа», «символы», поиск по названию и значению. Плюс 12 орнаментов (венки, корона, лента, лучи, кольца, рамка, завитки, звёзды, древо жизни) и надписи (прямо, дугой, на ленте).
-- **Привязка к полям:** символ из шаблона стоит в поле щита и сам перестраивается при смене формы и деления. Перетаскивание открепляет символ, кнопка «Вернуть в поле» привязывает обратно.
-- **Управление:** перетаскивание, ручки размера и поворота, щипок двумя пальцами, ползунки и клавиатура (стрелки, `+`/`-`, `Delete`, `Ctrl+Z`/`Ctrl+Y`, `Ctrl+D`). Слои: порядок, скрытие, блокировка, копия.
-- **Для практики:** значения символов и цветов, вопросы для размышления на каждой вкладке, заметка «почему я выбрал(а) это» у каждого элемента, рассказ о гербе во второй части PDF.
-- **Приватность:** всё остаётся в браузере. Нет сервера, аналитики и внешних запросов. Герб автосохраняется на устройстве; кнопка «Стереть мои данные» очищает всё (важно на общем компьютере). Проект можно сохранить в файл `.json` и открыть позже.
+## Features
 
-## Как устроено
+- **Two ways to start:** a blank sheet with complete freedom, or one of 8 templates. A template is an ordinary crest: everything in it can be changed or deleted.
+- **Shield:** 8 shapes, 9 divisions into fields, 8 patterns, 12 colors (7 classic heraldic tinctures) and a custom color.
+- **Catalog:** about 270 symbols in four categories (work, animals, nature, symbols) with search by name and meaning. Plus 12 ornaments (wreaths, crown, ribbon, rays, rings, frame, flourishes, stars, tree of life) and captions (straight, on an arc, on a banner).
+- **Snapping to fields:** a template symbol sits in a field of the shield and re-fits itself when the shape or division changes, always staying inside its field. Dragging detaches a symbol; "Return to a field" snaps it back.
+- **Controls:** drag, size and rotation handles, two-finger pinch, sliders and keyboard (arrows, `+`/`-`, `Delete`, `Ctrl+Z`/`Ctrl+Y`, `Ctrl+D`). Layers: order, hide, lock, copy.
+- **For the practice:** meanings of symbols and colors, reflection questions on every tab, a "why did I choose this" note on every element, and a story of the crest on the second part of the PDF.
+- **Privacy:** everything stays in the browser. No server, no analytics, no external requests. The crest is autosaved on the device; "Erase my data" wipes it all (important on a shared computer). A project can also be saved to a `.json` file and opened later.
 
-Герб — документ из слоёв (`src/model/types.ts`). Одна функция `renderCrest` (`src/render/renderCrest.ts`) превращает его в SVG и используется и в редакторе, и во всех экспортах, поэтому файл совпадает с экраном. В SVG только контуры, сплошная заливка и `clipPath`, без `<text>`, фильтров, масок и узоров `<pattern>`: именно они расходятся между браузером и PDF. Текст переводится в контуры шрифтами PT Serif и Cormorant, поэтому кириллица одинакова везде. Цена этого: текст в PDF нельзя выделить и найти поиском.
+## How it works
+
+A crest is a document made of layers (`src/model/types.ts`). A single function, `renderCrest` (`src/render/renderCrest.ts`), turns it into SVG and is used by the editor and by every export, so a downloaded file matches the screen. The SVG contains only paths, solid fills and `clipPath`: no `<text>`, filters, masks or `<pattern>`, since those are what differ between browsers and PDF. Text is converted to outlines using the PT Serif and Cormorant fonts, so Cyrillic and Latin letters look the same everywhere. The price is that text in the PDF cannot be selected or searched.
 
 ```
-src/model/    документ, история, шаблоны, проверка данных
-src/render/   щиты и деления, узоры, орнаменты, текст, renderCrest
-src/export/   SVG, PNG, PDF и страницы рассказа
-src/ui/       интерфейс на Preact
-src/data/     каталог символов, цвета, вопросы
-scripts/build-symbols.ts   отбирает значки из game-icons в src/data/symbols.json
+src/model/    document, history, templates, data validation
+src/render/   shields and divisions, patterns, ornaments, text, renderCrest, symbol fitting
+src/export/   SVG, PNG, PDF and the story pages
+src/ui/       Preact interface
+src/data/     symbol catalog, colors, reflection questions (Russian)
+src/i18n/     interface strings (ru.ts, en.ts) and English names and meanings (dataEn.ts)
+scripts/build-symbols.ts   picks the icons from game-icons into src/data/symbols.json
 ```
 
-## Как править тексты
+Symbols are fitted to shield fields (`fitField` in `src/render/shields.ts`): the hand-tuned size and anchor of each field are checked against the actual shield outline and dividers, and a symbol that would stick out is shrunk and moved to the nearest place where it fits entirely.
 
-Всё содержание лежит отдельно от кода:
+## Editing the content
 
-- `src/data/catalog.ts` — символы, их названия и значения (значок задаётся идентификатором из game-icons.net; сборка падает, если такого значка нет);
-- `src/data/tinctures.ts` — цвета и их значения;
-- `src/data/prompts.ts` — вопросы для размышления;
-- `src/ui/About.tsx` — страница «О сайте» и пошаговая подсказка для ведущего.
+All content lives apart from the code. Russian is the source language; English sits next to it.
 
-Значения и вопросы написаны как возможные ассоциации и не проходили клинической проверки: просмотрите их до работы с группами.
+- `src/data/catalog.ts` — symbols with their names and meanings (an icon is given by its game-icons.net id; the build fails if there is no such icon);
+- `src/data/tinctures.ts` — colors and their meanings;
+- `src/data/prompts.ts` — reflection questions;
+- `src/model/templates.ts` — templates (names, descriptions and captions are given in both languages);
+- `src/i18n/ru.ts`, `src/i18n/en.ts` — interface strings; both files must have the same keys and `{placeholders}`;
+- `src/i18n/dataEn.ts` — English names and meanings of symbols, colors, ornaments, shapes, divisions, patterns and questions;
+- `src/ui/About.tsx` — the "About" page and a step-by-step guide for facilitators.
 
-## Запуск
+The meanings and questions are worded as possible associations and have not been clinically reviewed: look them over before working with groups. The tests check that every symbol, color, ornament and question has an English version.
 
-Нужен Node.js 20.19 или новее.
+### Adding a language
+
+1. Add the code to `Lang` and `LANGS` in `src/i18n/index.ts` and a button label in `src/ui/LangSwitch.tsx`.
+2. Create a dictionary with the keys of `src/i18n/ru.ts` and register it in `DICTS`.
+3. Add translations of the data tables (`src/i18n/dataEn.ts` is the model to follow), the `Pair` fields of the templates and `About.tsx`.
+
+## Running locally
+
+Requires Node.js 20.19 or newer.
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173/family-crest/
-npm test           # модульные тесты (Vitest)
-npm run e2e        # сквозные тесты (Playwright), сами собирают сайт
-npm run build      # проверка типов и сборка в dist/
+npm test           # unit tests (Vitest)
+npm run e2e        # end-to-end tests (Playwright); they build the site themselves
+npm run build      # type check and build into dist/
 ```
 
-Для сквозных тестов нужны браузер Playwright (`npx playwright install chromium`) и утилиты `pdfinfo` и `pdftoppm` из пакета poppler. Тесты в WebKit включаются переменной `E2E_WEBKIT=1`, если в системе есть его библиотеки.
+End-to-end tests need the Playwright browser (`npx playwright install chromium`) and the `pdfinfo` and `pdftoppm` tools from poppler. WebKit tests are enabled with `E2E_WEBKIT=1` if its system libraries are installed.
 
-## Публикация
+### What the tests cover
 
-При каждом пуше в `main` GitHub Actions проверяет типы, гоняет тесты, собирает сайт и публикует его на GitHub Pages (`.github/workflows/deploy.yml`). В настройках репозитория: Settings → Pages → Source: **GitHub Actions**. Адрес сайта задан в `vite.config.ts` (`base: '/family-crest/'`).
+- **Templates:** every template, in both languages, is checked geometrically (`tests/templates.test.ts`): nothing leaves the canvas, symbols stay inside the shield and their own field with a margin and do not touch each other, the shield, ornaments and captions are mirror-symmetric about the vertical axis, captions do not run into the shield, symbols or rings.
+- **Shield fields:** for every shape and division, a symbol fits its field; mirrored fields are mirror images.
+- **Translations:** both dictionaries have the same keys and placeholders, English text has no Cyrillic, and nothing in the catalog is untranslated.
+- **End to end:** both paths from start to export, drag, rotate, scale, restoring after a reload, erasing data, no external requests, and switching the language.
 
-## Лицензии и авторы
+## Deployment
 
-- Код — MIT (см. `LICENSE`).
-- **Значки** — [game-icons.net](https://game-icons.net), авторы Lorc, Delapouite, Skoll, Willdabeast, Lord Berandas и другие, лицензия [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Из набора выбраны значки каталога; цвет изменяется в редакторе. Указание авторства есть на странице «О сайте», в метаданных SVG и на первой странице PDF.
-- Шрифты **PT Serif** и **Cormorant** — SIL Open Font License 1.1 (через пакеты `@fontsource`).
+On every push to `main`, GitHub Actions checks types, runs the tests, builds the site and publishes it to GitHub Pages (`.github/workflows/deploy.yml`). In the repository settings: Settings → Pages → Source: **GitHub Actions**. The site address is set in `vite.config.ts` (`base: '/family-crest/'`).
+
+## Licenses and credits
+
+- Code: MIT (see `LICENSE`).
+- **Icons:** [game-icons.net](https://game-icons.net), by Lorc, Delapouite, Skoll, Willdabeast, Lord Berandas and others, licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). The catalog icons are selected from the set; their color is changed in the editor. Credit is given on the "About" page, in the SVG metadata and on the first page of the PDF.
+- **Fonts** PT Serif and Cormorant: SIL Open Font License 1.1 (via the `@fontsource` packages).

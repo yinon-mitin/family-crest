@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { deleteLayer, duplicateLayer, getState, redo, select, setState, undo, updateLayer, useStore, type Pane } from '../model/store.ts';
 import { findLayer } from '../model/doc.ts';
+import { t } from '../i18n/index.ts';
 import { About } from './About.tsx';
 import { AddPanel } from './AddPanel.tsx';
 import { Canvas } from './Canvas.tsx';
@@ -9,10 +10,10 @@ import { Header, StageBar } from './Header.tsx';
 import { LayersPanel } from './LayersPanel.tsx';
 import { PropsPanel } from './PropsPanel.tsx';
 
-const PANES: { id: Pane; label: string }[] = [
-  { id: 'add', label: 'Добавить' },
-  { id: 'props', label: 'Свойства' },
-  { id: 'layers', label: 'Слои' },
+const PANES: { id: Pane; label: () => string }[] = [
+  { id: 'add', label: () => t('editor.add') },
+  { id: 'props', label: () => t('editor.props') },
+  { id: 'layers', label: () => t('editor.layers') },
 ];
 
 function useShortcuts() {
@@ -67,7 +68,7 @@ export function Editor() {
         <aside class="left">
           <AddPanel />
         </aside>
-        <section class="stage" aria-label="Герб">
+        <section class="stage" aria-label={t('editor.stage')}>
           <StageBar />
           <div class="canvas-wrap">
             <Canvas />
@@ -78,10 +79,10 @@ export function Editor() {
           <LayersPanel />
         </aside>
       </main>
-      <nav class="pane-tabs" aria-label="Панели">
+      <nav class="pane-tabs" aria-label={t('editor.panes')}>
         {PANES.map((p) => (
           <button key={p.id} type="button" class={pane === p.id ? 'on' : ''} aria-pressed={pane === p.id} onClick={() => setState({ pane: p.id })}>
-            {p.label}
+            {p.label()}
           </button>
         ))}
       </nav>

@@ -3,8 +3,10 @@ import { emptyDoc } from '../model/doc.ts';
 import { loadAuto } from '../model/serialize.ts';
 import { openDoc, setState } from '../model/store.ts';
 import { TEMPLATES } from '../model/templates.ts';
+import { pick, t } from '../i18n/index.ts';
 import { renderCrest } from '../render/renderCrest.ts';
 import { About } from './About.tsx';
+import { LangSwitch } from './LangSwitch.tsx';
 import { pickFile, wipe } from './files.ts';
 import { useStore } from '../model/store.ts';
 
@@ -19,45 +21,45 @@ export function Start() {
 
   return (
     <div class="start">
+      <div class="start-top">
+        <LangSwitch class="light" />
+      </div>
       <header class="hero">
         <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 8h44v26c0 12-10 19-22 24C20 53 10 46 10 34z" fill="currentColor" /><path d="M32 14v38M14 28h36" stroke="#e0b44c" stroke-width="4" /></svg>
-        <h1>Герб семьи</h1>
-        <p>
-          Соберите герб своей семьи из рабочих сфер, животных, природы, цветов и символов. Начните с чистого листа или возьмите шаблон и измените в нём всё, что захотите.
-          Готовый герб можно скачать в PNG, PDF и SVG.
-        </p>
+        <h1>{t('app.title')}</h1>
+        <p>{t('start.lead')}</p>
       </header>
 
       <section aria-labelledby="start-h">
-        <h2 id="start-h">С чего начнём?</h2>
+        <h2 id="start-h">{t('start.heading')}</h2>
         <div class="cards">
           {saved && (
             <button type="button" class="card-btn saved" onClick={() => openDoc(saved)}>
               <div class="thumb-box" dangerouslySetInnerHTML={{ __html: savedSvg }} />
-              <b>Продолжить</b>
-              <span>Ваш герб, который вы начали на этом устройстве</span>
+              <b>{t('start.continue')}</b>
+              <span>{t('start.continueNote')}</span>
             </button>
           )}
           <button type="button" class="card-btn blank" onClick={() => openDoc(emptyDoc())}>
             <div class="thumb-box blank-box" aria-hidden="true"><span>+</span></div>
-            <b>Чистый лист</b>
-            <span>Полная свобода: щит, символы и орнаменты ставятся куда угодно</span>
+            <b>{t('start.blank')}</b>
+            <span>{t('start.blankNote')}</span>
           </button>
-          {cards.map(({ t, svg }) => (
-            <button key={t.id} type="button" class="card-btn" onClick={() => openDoc(t.make())}>
+          {cards.map(({ t: tpl, svg }) => (
+            <button key={tpl.id} type="button" class="card-btn" onClick={() => openDoc(tpl.make())}>
               <div class="thumb-box" dangerouslySetInnerHTML={{ __html: svg }} />
-              <b>{t.name}</b>
-              <span>{t.description}</span>
+              <b>{pick(tpl.name)}</b>
+              <span>{pick(tpl.description)}</span>
             </button>
           ))}
         </div>
-        {saved && <p class="hint center">Новый герб заменит тот, что сохранён на этом устройстве. Чтобы сохранить его, скачайте проект в файл через меню «Файл».</p>}
+        {saved && <p class="hint center">{t('start.replaceNote')}</p>}
       </section>
 
       <footer class="start-foot">
-        <button type="button" class="btn" onClick={pickFile}>Открыть проект из файла</button>
-        <button type="button" class="btn" onClick={() => setState({ dialog: 'about' })}>О сайте и практике</button>
-        <button type="button" class="btn danger" onClick={() => void wipe()}>Стереть мои данные</button>
+        <button type="button" class="btn" onClick={pickFile}>{t('start.openFile')}</button>
+        <button type="button" class="btn" onClick={() => setState({ dialog: 'about' })}>{t('start.about')}</button>
+        <button type="button" class="btn danger" onClick={() => void wipe()}>{t('start.wipe')}</button>
       </footer>
       {dialog === 'about' && <About onClose={() => setState({ dialog: null })} />}
     </div>

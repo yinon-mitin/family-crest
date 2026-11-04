@@ -1,5 +1,7 @@
 import type { DivisionId, FieldStyle, ShapeId } from '../model/types.ts';
 import { poly } from './geometry.ts';
+import { distToEdge, flatten, inside } from './pathgeom.ts';
+import type { Poly } from './pathgeom.ts';
 
 export interface ShapeDef {
   name: string;
@@ -157,15 +159,122 @@ export interface FieldGeometry {
   size: number;
 }
 
+// ---------- подгонка символов под поля ----------
+//
+// Ручные размеры и точки закрепления в DIVISIONS задают желаемое положение. Подгонка проверяет его на
+// конкретной форме щита: если квадрат символа выходит за контур щита или за границу поля, символ
+// уменьшается и сдвигается к ближайшему месту, где он помещается целиком.
+
+const CELL = 5;
+/** Зазор до контура и разделительных линий: половина обводки и ореол символа. */
+const MARGIN = 9;
+/** Половина стороны квадрата, в который вписывается значок вместе с ореолом, в долях размера символа. */
+const INK_HALF = 0.49;
+const SIZE_STEPS = [1, 0.94, 0.88, 0.82, 0.76, 0.7, 0.64, 0.58, 0.52, 0.46];
+
+interface Clearance {
+  x0: number;
+  y0: number;
+  cols: number;
+  rows: number;
+  /** Расстояние от центра ячейки до края щита; отрицательное — снаружи. */
+  d: Float32Array;
+}
+
+const shapePolys: Partial<Record<ShapeId, Poly[]>> = {};
+const clearances: Partial<Record<ShapeId, Clearance>> = {};
+const fitted = new Map<string, FieldGeometry[]>();
+
+const polysOf = (shape: ShapeId): Poly[] => (shapePolys[shape] ??= flatten(SHAPES[shape].d));
+
+function clearanceOf(shape: ShapeId): Clearance {
+  const hit = clearances[shape];
+  if (hit) return hit;
+  const polys = polysOf(shape);
+  let mx = 0;
+  let my = 0;
+  for (const p of polys)
+    for (const [x, y] of p) {
+      mx = Math.max(mx, Math.abs(x));
+      my = Math.max(my, Math.abs(y));
+    }
+  const halfCols = Math.ceil(mx / CELL);
+  const halfRows = Math.ceil(my / CELL);
+  const c: Clearance = { x0: -halfCols * CELL, y0: -halfRows * CELL, cols: 2 * halfCols, rows: 2 * halfRows, d: new Float32Array(4 * halfCols * halfRows) };
+  for (let j = 0; j < c.rows; j++)
+    for (let i = 0; i < c.cols; i++) {
+      const x = c.x0 + (i + 0.5) * CELL;
+      const y = c.y0 + (j + 0.5) * CELL;
+      const dist = distToEdge(polys, x, y);
+      c.d[j * c.cols + i] = inside(polys, x, y) ? dist : -dist;
+    }
+  return (clearances[shape] = c);
+}
+
+function fitField(shape: ShapeId, field: FieldGeometry, single: boolean): FieldGeometry {
+  const cl = clearanceOf(shape);
+  const fp = single ? null : flatten(field.d);
+  const { cols, rows } = cl;
+  // Суммы по префиксам: «все ли ячейки квадрата свободны» проверяется за O(1).
+  const sum = new Int32Array((cols + 1) * (rows + 1));
+  for (let j = 0; j < rows; j++)
+    for (let i = 0; i < cols; i++) {
+      let ok = cl.d[j * cols + i] >= MARGIN;
+      if (ok && fp) {
+        const x = cl.x0 + (i + 0.5) * CELL;
+        const y = cl.y0 + (j + 0.5) * CELL;
+        ok = inside(fp, x, y) && distToEdge(fp, x, y) >= MARGIN;
+      }
+      sum[(j + 1) * (cols + 1) + i + 1] = (ok ? 1 : 0) + sum[j * (cols + 1) + i + 1] + sum[(j + 1) * (cols + 1) + i] - sum[j * (cols + 1) + i];
+    }
+  const fits = (cx: number, cy: number, half: number): boolean => {
+    const i0 = Math.floor((cx - half - cl.x0) / CELL);
+    const i1 = Math.ceil((cx + half - cl.x0) / CELL);
+    const j0 = Math.floor((cy - half - cl.y0) / CELL);
+    const j1 = Math.ceil((cy + half - cl.y0) / CELL);
+    if (i0 < 0 || j0 < 0 || i1 > cols || j1 > rows) return false;
+    const w = cols + 1;
+    return sum[j1 * w + i1] - sum[j0 * w + i1] - sum[j1 * w + i0] + sum[j0 * w + i0] === (i1 - i0) * (j1 - j0);
+  };
+
+  // Поле на оси щита остаётся на оси: сетка симметрична, поэтому сдвиг к нулю не нарушает посадку.
+  const centered = (g: FieldGeometry): FieldGeometry => (field.x === 0 ? { ...g, x: 0 } : g);
+  let fallback: FieldGeometry | null = null;
+  for (const k of SIZE_STEPS) {
+    const size = field.size * k;
+    const half = size * INK_HALF;
+    if (fits(field.x, field.y, half)) return { ...field, size };
+    let best: { x: number; y: number; dist: number } | null = null;
+    for (let j = 0; j < rows; j++)
+      for (let i = 0; i < cols; i++) {
+        const x = cl.x0 + (i + 0.5) * CELL;
+        const y = cl.y0 + (j + 0.5) * CELL;
+        const dist = Math.round(Math.hypot(x - field.x, y - field.y) * 1e4) / 1e4;
+        if (best && (dist > best.dist || (dist === best.dist && (Math.abs(x) > Math.abs(best.x) || (Math.abs(x) === Math.abs(best.x) && y >= best.y))))) continue;
+        if (fits(x, y, half)) best = { x, y, dist };
+      }
+    if (best) {
+      fallback = { ...field, x: best.x, y: best.y, size };
+      // Далеко сдвигать нельзя: символ должен остаться в «своём» месте поля.
+      if (best.dist <= 0.5 * size) return centered(fallback);
+    }
+  }
+  return fallback ? centered(fallback) : field;
+}
+
 /** Поля щита в его локальных координатах: контур, точка закрепления и размер символа. */
 export function shieldFields(shape: ShapeId, division: DivisionId): FieldGeometry[] {
+  const key = `${shape}|${division}`;
+  const hit = fitted.get(key);
+  if (hit) return hit;
   const s = SHAPES[shape];
-  return DIVISIONS[division].fields(s.w, s.h).map((f) => ({
-    d: f.d,
-    x: f.ax * s.w * s.inset,
-    y: f.ay * s.h * s.inset,
-    size: f.k * s.w * s.sizeK,
-  }));
+  const def = DIVISIONS[division];
+  const fields = def.fields(s.w, s.h).map((f) => {
+    const wish: FieldGeometry = { d: f.d, x: f.ax * s.w * s.inset, y: f.ay * s.h * s.inset, size: f.k * s.w * s.sizeK };
+    return fitField(shape, wish, def.count === 1);
+  });
+  fitted.set(key, fields);
+  return fields;
 }
 
 export function defaultFields(division: DivisionId, base: FieldStyle[] = []): FieldStyle[] {

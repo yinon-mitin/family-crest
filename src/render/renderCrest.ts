@@ -3,6 +3,7 @@ import { CANVAS_H, CANVAS_W } from '../model/types.ts';
 import { resolveSymbol, slotShield } from '../model/doc.ts';
 import { getSymbolPath } from '../data/symbols.ts';
 import { fontsReady } from './fonts.ts';
+import { t } from '../i18n/index.ts';
 import { n } from './geometry.ts';
 import { ORNAMENTS } from './ornaments.ts';
 import { patternGeometry } from './patterns.ts';
@@ -21,8 +22,8 @@ export interface RenderOptions {
   attribution?: boolean;
 }
 
-export const ATTRIBUTION =
-  'Значки: game-icons.net, лицензия CC BY 3.0 (авторы: Lorc, Delapouite, Skoll, Willdabeast, Lord Berandas и др.). https://game-icons.net';
+/** Указание авторства значков на текущем языке. */
+export const attribution = (): string => t('story.attribution');
 
 export const esc = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -129,7 +130,7 @@ export function renderBody(doc: CrestDoc, opts: RenderOptions = {}): string {
 export function renderCrest(doc: CrestDoc, opts: RenderOptions = {}): string {
   const size = opts.width ? ` width="${n(opts.width)}" height="${n((opts.width * CANVAS_H) / CANVAS_W)}"` : '';
   const meta = opts.attribution
-    ? `<title>${esc(doc.family ? `Герб семьи ${doc.family}` : 'Герб семьи')}</title><metadata>${esc(ATTRIBUTION)}</metadata>`
+    ? `<title>${esc(doc.family ? t('story.heading', { name: doc.family }) : t('story.headingAnon'))}</title><metadata>${esc(attribution())}</metadata>`
     : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CANVAS_W} ${CANVAS_H}"${size}>${meta}${renderBody(doc, opts)}</svg>`;
 }

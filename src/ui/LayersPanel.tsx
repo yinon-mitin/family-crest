@@ -1,5 +1,6 @@
 import { moveLayer, select, updateLayer, useStore } from '../model/store.ts';
-import { KIND_LABEL, layerTitle } from './names.ts';
+import { t } from '../i18n/index.ts';
+import { kindLabel, layerTitle } from './names.ts';
 
 export function LayersPanel() {
   const doc = useStore((s) => s.doc);
@@ -7,19 +8,19 @@ export function LayersPanel() {
   const list = [...doc.layers].reverse();
   return (
     <div class="panel layers-panel">
-      <h3 class="panel-title">Слои</h3>
-      {list.length === 0 && <p class="hint">Здесь появятся все элементы герба. Верхние в списке лежат поверх нижних.</p>}
+      <h3 class="panel-title">{t('layers.title')}</h3>
+      {list.length === 0 && <p class="hint">{t('layers.hint')}</p>}
       <ul class="layers">
         {list.map((l) => (
           <li key={l.id} class={`${l.id === selected ? 'on' : ''}${l.hidden ? ' off' : ''}`}>
             <button type="button" class="layer-main" onClick={() => select(l.id)} aria-pressed={l.id === selected}>
-              <span class="kind">{KIND_LABEL[l.kind]}</span>
+              <span class="kind">{kindLabel(l.kind)}</span>
               <span class="name">{layerTitle(l)}</span>
             </button>
-            <button type="button" class="mini" title={l.hidden ? 'Показать' : 'Скрыть'} aria-label={l.hidden ? 'Показать' : 'Скрыть'} onClick={() => updateLayer(l.id, { hidden: !l.hidden })}>{l.hidden ? '○' : '●'}</button>
-            <button type="button" class="mini" title={l.locked ? 'Разблокировать' : 'Заблокировать'} aria-label={l.locked ? 'Разблокировать' : 'Заблокировать'} onClick={() => updateLayer(l.id, { locked: !l.locked })}>{l.locked ? '🔒' : '🔓'}</button>
-            <button type="button" class="mini" title="Выше" aria-label="Выше" onClick={() => moveLayer(l.id, 1)}>↑</button>
-            <button type="button" class="mini" title="Ниже" aria-label="Ниже" onClick={() => moveLayer(l.id, -1)}>↓</button>
+            <button type="button" class="mini" title={l.hidden ? t('props.show') : t('props.hide')} aria-label={l.hidden ? t('props.show') : t('props.hide')} onClick={() => updateLayer(l.id, { hidden: !l.hidden })}>{l.hidden ? '○' : '●'}</button>
+            <button type="button" class="mini" title={l.locked ? t('props.unlock') : t('props.lock')} aria-label={l.locked ? t('props.unlock') : t('props.lock')} onClick={() => updateLayer(l.id, { locked: !l.locked })}>{l.locked ? '🔒' : '🔓'}</button>
+            <button type="button" class="mini" title={t('props.up')} aria-label={t('props.up')} onClick={() => moveLayer(l.id, 1)}>↑</button>
+            <button type="button" class="mini" title={t('props.down')} aria-label={t('props.down')} onClick={() => moveLayer(l.id, -1)}>↓</button>
           </li>
         ))}
       </ul>

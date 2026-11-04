@@ -1,9 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useId } from 'preact/hooks';
 import type { DivisionId, ShapeId, OrnamentId } from '../model/types.ts';
-import { TINCTURES, TINCTURE_BY_HEX } from '../data/tinctures.ts';
 import { getSymbolPath } from '../data/symbols.ts';
-import { PROMPTS, PROMPT_HINT, PROMPT_TITLE } from '../data/prompts.ts';
+import { prompts, tinctureByHex, tinctures } from '../i18n/data.ts';
+import { t } from '../i18n/index.ts';
 import type { TabId } from '../model/store.ts';
 import { ORNAMENTS } from '../render/ornaments.ts';
 import { SHAPES, shieldFields } from '../render/shields.ts';
@@ -63,15 +63,15 @@ export function ColorField(props: {
   /** Показывать значение выбранного цвета. */
   meaning?: boolean;
 }) {
-  const t = props.value ? TINCTURE_BY_HEX[props.value.toLowerCase()] : undefined;
+  const tincture = props.value ? tinctureByHex(props.value) : undefined;
   return (
     <div class="field">
       <div class="field-label">{props.label}</div>
       <div class="swatches" role="group" aria-label={props.label}>
         {props.none && (
-          <button type="button" class={`swatch none${props.value === null ? ' on' : ''}`} title="Без цвета" aria-label="Без цвета" aria-pressed={props.value === null} onClick={() => props.onChange(null)} />
+          <button type="button" class={`swatch none${props.value === null ? ' on' : ''}`} title={t('color.none')} aria-label={t('color.none')} aria-pressed={props.value === null} onClick={() => props.onChange(null)} />
         )}
-        {TINCTURES.map((c) => (
+        {tinctures().map((c) => (
           <button
             type="button"
             key={c.hex}
@@ -83,13 +83,13 @@ export function ColorField(props: {
             onClick={() => props.onChange(c.hex)}
           />
         ))}
-        <label class="swatch custom" title="Свой цвет">
-          <input type="color" value={props.value ?? '#ffffff'} aria-label={`${props.label}: свой цвет`} onInput={(e) => props.onChange((e.target as HTMLInputElement).value)} />
+        <label class="swatch custom" title={t('color.custom')}>
+          <input type="color" value={props.value ?? '#ffffff'} aria-label={t('color.customOf', { label: props.label })} onInput={(e) => props.onChange((e.target as HTMLInputElement).value)} />
         </label>
       </div>
-      {props.meaning && t && (
+      {props.meaning && tincture && (
         <div class="hint">
-          <b>{t.name}</b>: {t.meaning}
+          <b>{tincture.name}</b>: {tincture.meaning}
         </div>
       )}
     </div>
@@ -111,13 +111,13 @@ export function Slider(props: { label: string; value: number; min: number; max: 
 export function Prompts({ tab }: { tab: TabId }) {
   return (
     <details class="prompts">
-      <summary>{PROMPT_TITLE}</summary>
+      <summary>{t('prompts.title')}</summary>
       <ul>
-        {PROMPTS[tab].map((q) => (
+        {prompts(tab).map((q) => (
           <li key={q}>{q}</li>
         ))}
       </ul>
-      <p class="hint">{PROMPT_HINT}</p>
+      <p class="hint">{t('prompts.hint')}</p>
     </details>
   );
 }

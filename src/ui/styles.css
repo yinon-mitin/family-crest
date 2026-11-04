@@ -348,6 +348,40 @@ input[type='range'] {
   min-height: 38px;
 }
 
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  overflow: hidden;
+  flex: none;
+}
+
+.lang-switch button {
+  min-width: 38px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: 600 13px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lang-switch button.on {
+  background: var(--gold);
+  color: var(--navy);
+}
+
+.lang-switch.light {
+  border-color: var(--line);
+  color: var(--navy);
+}
+
+.start-top {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .menu {
   position: relative;
 }

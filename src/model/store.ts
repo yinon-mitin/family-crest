@@ -4,6 +4,7 @@ import { detachSymbol, emptyDoc, findLayer, freeSlot, makeOrnament, makeShield, 
 import { loadAuto, saveAuto } from './serialize.ts';
 import { ORNAMENTS } from '../render/ornaments.ts';
 import { defaultFields } from '../render/shields.ts';
+import { t } from '../i18n/index.ts';
 
 export type Pane = 'add' | 'props' | 'layers';
 export type TabId = 'shield' | 'work' | 'animal' | 'nature' | 'symbol' | 'ornament' | 'text';
@@ -220,7 +221,7 @@ export function addOrnament(id: OrnamentId): void {
   addLayer(makeOrnament(id), ORNAMENTS[id].behind ? 'bottom' : 'top');
 }
 
-export function addText(text = 'Наш девиз'): void {
+export function addText(text = t('text.default')): void {
   addLayer(makeText(text));
 }
 

@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
+import { t } from '../i18n/index.ts';
 
 export function Modal(props: { title: string; onClose(): void; children: ComponentChildren; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -19,7 +20,7 @@ export function Modal(props: { title: string; onClose(): void; children: Compone
       <div class={`modal${props.wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={props.title} tabIndex={-1} ref={ref}>
         <div class="modal-head">
           <h2>{props.title}</h2>
-          <button type="button" class="mini" aria-label="Закрыть" onClick={props.onClose}>✕</button>
+          <button type="button" class="mini" aria-label={t('modal.close')} onClick={props.onClose}>✕</button>
         </div>
         <div class="modal-body">{props.children}</div>
       </div>

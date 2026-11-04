@@ -1,13 +1,14 @@
 import type { CrestDoc } from '../model/types.ts';
+import { t } from '../i18n/index.ts';
 import { buildPages, PAGE_H, PAGE_W } from './story.ts';
 
 export async function exportPdf(doc: CrestDoc, withStory: boolean): Promise<Blob> {
   const [{ jsPDF }, { svg2pdf }] = await Promise.all([import('jspdf'), import('svg2pdf.js')]);
   const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait', compress: true });
   pdf.setProperties({
-    title: doc.family ? `Герб семьи ${doc.family}` : 'Герб семьи',
-    subject: 'Герб семьи',
-    creator: 'Герб семьи (family-crest)',
+    title: doc.family ? t('story.heading', { name: doc.family }) : t('story.headingAnon'),
+    subject: t('pdf.subject'),
+    creator: `${t('app.title')} (family-crest)`,
   });
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden';

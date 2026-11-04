@@ -51,7 +51,7 @@ function wreath(kind: Wreath, color: string, color2: string): string {
       } else if (kind === 'olive') {
         const len = 70 - 18 * t;
         leaves += leaf(x, y, h + 0.7, len, 14) + leaf(x, y, h - 0.7, len, 14);
-        if (i % 3 === 0) extras += circle(x + 16 * Math.cos(h + 1.9), y + 16 * Math.sin(h + 1.9), 11);
+        if (i % 3 === 0) extras += circle(x + 16 * Math.cos(h + s * 1.9), y + 16 * Math.sin(h + s * 1.9), 11);
       } else if (t < 0.45) {
         leaves += leaf(x, y, h + 0.55, 90 - 30 * t, 14) + leaf(x, y, h - 0.55, 90 - 30 * t, 14);
       } else {
@@ -183,11 +183,12 @@ function stars(color: string): string {
 }
 
 function tree(color: string, color2: string): string {
-  const rnd = seeded(11);
   let wood = '';
   let crowns = '';
-  const grow = (x: number, y: number, ang: number, len: number, w: number, depth: number, up: boolean): void => {
-    const bend = (rnd() - 0.5) * 0.35;
+  // Дерево симметрично: ветви растут из одного генератора случайных чисел зеркально в обе стороны,
+  // а центральные ствол и корень идут строго по оси.
+  const grow = (side: number, rnd: () => number, x: number, y: number, ang: number, len: number, w: number, depth: number, up: boolean): void => {
+    const bend = (rnd() - 0.5) * 0.35 * side;
     const mx = x + Math.cos(ang + bend) * len * 0.5;
     const my = y + Math.sin(ang + bend) * len * 0.5;
     const x2 = x + Math.cos(ang) * len + Math.cos(ang + Math.PI / 2) * len * bend * 0.35;
@@ -195,20 +196,31 @@ function tree(color: string, color2: string): string {
     wood += strokePoly([[x, y], [mx, my], [x2, y2]], [w, w * 0.85, w * 0.7]);
     if (depth === 0) {
       if (up) {
-        crowns += circle(x2, y2, 24 + rnd() * 10);
-        crowns += circle(x2 + 18, y2 + 14, 15 + rnd() * 6);
-        crowns += circle(x2 - 18, y2 + 12, 15 + rnd() * 6);
+        const r1 = 24 + rnd() * 10;
+        const r2 = 15 + rnd() * 6;
+        const r3 = 15 + rnd() * 6;
+        crowns += circle(x2, y2, r1) + circle(x2 + 18 * side, y2 + 14, r2) + circle(x2 - 18 * side, y2 + 12, r3);
       }
       return;
     }
     const spread = up ? 0.5 : 0.55;
-    const kids = depth === 5 && up ? [-0.7, 0.05, 0.7] : [-spread, spread];
-    for (const k of kids) grow(x2, y2, ang + k + (rnd() - 0.5) * 0.18, len * 0.76, w * 0.68, depth - 1, up);
+    for (const k of [-spread, spread]) grow(side, rnd, x2, y2, ang + k * side + (rnd() - 0.5) * 0.18 * side, len * 0.76, w * 0.68, depth - 1, up);
   };
-  grow(0, 170, -Math.PI / 2, 168, 38, 5, true);
-  grow(-8, 168, Math.PI / 2 + 0.55, 90, 17, 3, false);
-  grow(8, 168, Math.PI / 2 - 0.55, 90, 17, 3, false);
-  grow(0, 168, Math.PI / 2, 80, 14, 3, false);
+  const stem = (x: number, y: number, ang: number, len: number, w: number, up: boolean): void => {
+    const x2 = x + Math.cos(ang) * len;
+    const y2 = y + Math.sin(ang) * len;
+    wood += strokePoly([[x, y], [(x + x2) / 2, (y + y2) / 2], [x2, y2]], [w, w * 0.85, w * 0.7]);
+    if (up) crowns += circle(x2, y2, 30) + circle(x2 + 20, y2 + 16, 18) + circle(x2 - 20, y2 + 16, 18);
+  };
+  // Ствол и пара ветвей на каждой стороне: правая сторона — отражение левой.
+  stem(0, 170, -Math.PI / 2, 168, 38, false);
+  for (const side of [1, -1]) {
+    const ang = -Math.PI / 2 + 0.7 * side;
+    grow(side, seeded(11), 0, 2, ang, 168 * 0.76, 38 * 0.68, 4, true);
+    grow(side, seeded(23), side * 8, 168, Math.PI / 2 - 0.55 * side, 90, 17, 3, false);
+  }
+  stem(0, -2, -Math.PI / 2, 130, 26, true);
+  stem(0, 168, Math.PI / 2, 80, 14, false);
   return `<g transform="translate(0 -30)">` + p(wood, color) + p(crowns, color2) + `</g>`;
 }
 

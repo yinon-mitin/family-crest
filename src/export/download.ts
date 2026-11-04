@@ -1,4 +1,5 @@
 import type { CrestDoc } from '../model/types.ts';
+import { t } from '../i18n/index.ts';
 
 export function download(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -17,5 +18,5 @@ export function fileName(doc: CrestDoc, ext: string, suffix = ''): string {
     .replace(/[\\/:*?"<>|\s]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
-  return `gerb-${slug || 'semi'}${suffix}.${ext}`;
+  return `${t('file.prefix')}-${slug || t('file.noName')}${suffix}.${ext}`;
 }

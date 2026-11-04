@@ -1,15 +1,12 @@
 import type { CrestDoc, Layer, ShieldLayer, SymbolLayer } from '../model/types.ts';
 import { CANVAS_H, CANVAS_W } from '../model/types.ts';
-import { BY_ICON } from '../data/catalog.ts';
 import { getSymbolPath } from '../data/symbols.ts';
-import { TINCTURE_BY_HEX } from '../data/tinctures.ts';
+import { divisionName, ornamentMeaning, ornamentName, patternName, shapeName, symbolInfo, tinctureByHex } from '../i18n/data.ts';
+import { t } from '../i18n/index.ts';
 import { measure, textPath } from '../render/fonts.ts';
-import { ATTRIBUTION, renderBody } from '../render/renderCrest.ts';
-import { ORNAMENTS } from '../render/ornaments.ts';
-import { PATTERNS } from '../render/patterns.ts';
-import { DIVISIONS, SHAPES } from '../render/shields.ts';
+import { attribution, renderBody } from '../render/renderCrest.ts';
 
-// Страницы PDF строятся как SVG, где весь текст переведён в контуры: так кириллица выглядит одинаково везде.
+// Страницы PDF строятся как SVG, где весь текст переведён в контуры: так буквы выглядят одинаково везде.
 // Размеры в пунктах (A4).
 export const PAGE_W = 595.28;
 export const PAGE_H = 841.89;
@@ -73,8 +70,8 @@ class Writer {
 }
 
 const hexName = (hex: string): string => {
-  const t = TINCTURE_BY_HEX[hex.toLowerCase()];
-  return t ? `${t.name} — ${t.meaning}` : hex.toUpperCase();
+  const tincture = tinctureByHex(hex);
+  return tincture ? `${tincture.name} — ${tincture.meaning}` : hex.toUpperCase();
 };
 
 function symbolIcon(l: SymbolLayer, x: number, y: number, size: number): string {
@@ -95,36 +92,35 @@ function entry(w: Writer, l: Layer): void {
   switch (l.kind) {
     case 'shield': {
       const s = l as ShieldLayer;
-      title = `Щит: ${SHAPES[s.shape].name.toLowerCase()}`;
-      meaning = `Деление: ${DIVISIONS[s.division].name.toLowerCase()}.`;
+      title = t('story.shield', { shape: shapeName(s.shape).toLowerCase() });
+      meaning = t('story.division', { division: divisionName(s.division).toLowerCase() });
       s.fields.forEach((f, i) => {
-        const pat = f.pattern ? `, узор «${PATTERNS[f.pattern].name.toLowerCase()}»` : '';
-        extra.push(`${s.fields.length > 1 ? `Поле ${i + 1}` : 'Цвет поля'}: ${hexName(f.color)}${pat}`);
+        const pat = f.pattern ? t('story.pattern', { pattern: patternName(f.pattern).toLowerCase() }) : '';
+        extra.push(`${s.fields.length > 1 ? t('story.field', { n: i + 1 }) : t('story.fieldColor')}: ${hexName(f.color)}${pat}`);
       });
       break;
     }
     case 'symbol': {
-      const e = BY_ICON[l.symbol];
-      title = e?.name ?? 'Символ';
-      meaning = e ? `Может означать: ${e.meaning}.` : '';
-      extra.push(`Цвет: ${hexName(l.color)}`);
+      const e = symbolInfo(l.symbol);
+      title = e?.name ?? t('layer.symbol');
+      meaning = e ? t('meaning.prefix', { text: e.meaning }) : '';
+      extra.push(t('story.color', { color: hexName(l.color) }));
       break;
     }
     case 'ornament': {
-      const o = ORNAMENTS[l.ornament];
-      title = o.name;
-      meaning = `Может означать: ${o.meaning}.`;
+      title = ornamentName(l.ornament);
+      meaning = t('meaning.prefix', { text: ornamentMeaning(l.ornament) });
       break;
     }
     case 'text':
-      title = `Надпись «${l.text}»`;
+      title = t('story.text', { text: l.text });
       break;
   }
   const size = 10.5;
   const blocks: [string, Face, number, string][] = [];
   if (meaning) blocks.push([meaning, BODY, size, SOFT]);
   for (const e of extra) blocks.push([e, BODY, size, SOFT]);
-  if (note) blocks.push([`Моими словами: ${note}`, BODY_B, 11, INK]);
+  if (note) blocks.push([t('story.inMyWords', { note }), BODY_B, 11, INK]);
   const lines = blocks.reduce((n, b) => n + wrap(b[0], b[1], b[2], maxW).length, 0);
   w.need(Math.max(44, 20 + lines * 15.5) + 10);
   const top = w.y;
@@ -144,7 +140,7 @@ export function buildPages(doc: CrestDoc, withStory: boolean): string[] {
 
   // страница 1: герб
   const name = doc.family.trim();
-  const heading = name ? `Герб семьи ${name}` : 'Герб семьи';
+  const heading = name ? t('story.heading', { name }) : t('story.headingAnon');
   const hs = 34;
   const hw = measure(heading, 'display', true, hs);
   const scale = Math.min(1, (PAGE_W - 2 * M) / hw);
@@ -153,20 +149,13 @@ export function buildPages(doc: CrestDoc, withStory: boolean): string[] {
   const k = cw / CANVAS_W;
   const top = 80 + Math.max(0, (PAGE_H - 80 - 70 - cw * (CANVAS_H / CANVAS_W)) / 2.4);
   w.add(`<g transform="translate(${(PAGE_W - cw) / 2} ${top}) scale(${k})">${renderBody(doc, { prefix: 'pdf' })}</g>`);
-  const attr = wrap(ATTRIBUTION, BODY, 7.5, PAGE_W - 2 * M);
+  const attr = wrap(attribution(), BODY, 7.5, PAGE_W - 2 * M);
   attr.forEach((line, i) => w.add(`<g fill="${SOFT}">${textPath(line, 'serif', false, 7.5, M, PAGE_H - 44 + i * 10)}</g>`));
 
   if (withStory) {
     w.newPage();
-    w.line('Рассказ о гербе', TITLE, 28, M, INK, 38);
-    w.paragraph(
-      'Каждый элемент герба — это выбор. Ниже собрано то, что выбранные символы и цвета могут означать, и ваши собственные слова о них.',
-      BODY,
-      11,
-      M,
-      PAGE_W - 2 * M,
-      SOFT,
-    );
+    w.line(t('story.title'), TITLE, 28, M, INK, 38);
+    w.paragraph(t('story.intro'), BODY, 11, M, PAGE_W - 2 * M, SOFT);
     w.y += 10;
     const order: Layer['kind'][] = ['shield', 'symbol', 'ornament', 'text'];
     const layers = doc.layers.filter((l) => !l.hidden);

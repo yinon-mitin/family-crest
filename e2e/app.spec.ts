@@ -200,3 +200,53 @@ test('стереть мои данные очищает хранилище', asy
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => localStorage.getItem('family-crest:autosave:v1'))).toBeNull();
 });
+
+test('английский интерфейс: переключение, запоминание, подписи и экспорт', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await page.goto('./');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await page.getByRole('button', { name: 'English' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Family crest' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page).toHaveTitle('Family crest');
+  for (const name of ['Classic shield', 'Four pillars', 'Two family lines', 'Medallion', 'Family tree', 'Sky and sea', 'Three generations', 'Our path']) {
+    await expect(page.getByRole('button', { name: new RegExp(name) })).toBeVisible();
+  }
+  expect(await page.locator('body').innerText()).not.toMatch(/[А-Яа-яЁё]/);
+
+  // выбор запоминается
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Family crest' })).toBeVisible();
+
+  await page.getByRole('button', { name: /Classic shield/ }).click();
+  await expect(page.locator('svg.canvas')).toBeVisible();
+  await page.getByPlaceholder('Family name (for the PDF)').fill('Ivanov');
+  if (isMobile(page)) await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('tab', { name: 'Animals' }).click();
+  await expect(page.getByRole('button', { name: 'Lion', exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Symbols' }).click();
+  await page.getByLabel('Search symbols').fill('anchor');
+  await expect(page.getByRole('button', { name: 'Anchor', exact: true }).or(page.getByRole('button', { name: 'Fleet', exact: true })).first()).toBeVisible();
+
+  if (!isMobile(page)) {
+    await page.getByRole('button', { name: 'Download', exact: true }).first().click();
+    await page.getByRole('radio', { name: /SVG/ }).click();
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('dialog').getByRole('button', { name: 'Download', exact: true }).click()]);
+    expect(dl.suggestedFilename()).toBe('family-crest-Ivanov.svg');
+    const dir = mkdtempSync(join(tmpdir(), 'crest-'));
+    await dl.saveAs(join(dir, 'c.svg'));
+    const svg = readFileSync(join(dir, 'c.svg'), 'utf8');
+    expect(svg).toContain('The Ivanov family crest');
+    expect(svg).toContain('Icons: game-icons.net');
+    expect(svg).not.toMatch(/[А-Яа-яЁё]/);
+  }
+
+  // обратно на русский: интерфейс снова русский
+  await page.getByRole('button', { name: 'Русский' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(page.getByPlaceholder('Название семьи (для PDF)')).toBeVisible();
+  expect(errors).toEqual([]);
+});

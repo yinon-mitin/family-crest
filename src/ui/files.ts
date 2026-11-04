@@ -1,22 +1,23 @@
 import { download, fileName } from '../export/download.ts';
 import { clearAuto, fromFile, toFile } from '../model/serialize.ts';
 import { emptyDoc } from '../model/doc.ts';
+import { t } from '../i18n/index.ts';
 import { getState, openDoc, toast } from '../model/store.ts';
 
 export function saveFile(): void {
   const { doc } = getState();
-  download(new Blob([toFile(doc)], { type: 'application/json' }), fileName(doc, 'json', '-проект'));
-  toast('Проект сохранён в файл');
+  download(new Blob([toFile(doc)], { type: 'application/json' }), fileName(doc, 'json', t('file.projectSuffix')));
+  toast(t('file.saved'));
 }
 
 export async function openFile(file: File): Promise<void> {
   if (file.size > 5_000_000) {
-    toast('Файл слишком большой для проекта герба');
+    toast(t('file.tooLarge'));
     return;
   }
   const doc = fromFile(await file.text());
   if (!doc) {
-    toast('Не удалось открыть: это не файл проекта герба');
+    toast(t('file.notProject'));
     return;
   }
   openDoc(doc);
@@ -32,7 +33,7 @@ export function pickFile(): void {
 
 /** Полностью стирает данные участника с этого устройства. */
 export function wipe(): boolean {
-  if (!window.confirm('Стереть созданный герб и все заметки с этого устройства? Это нельзя отменить.')) return false;
+  if (!window.confirm(t('file.wipeConfirm'))) return false;
   clearAuto();
   openDoc(emptyDoc());
   return true;

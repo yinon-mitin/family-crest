@@ -3,6 +3,7 @@ import { download, fileName } from '../export/download.ts';
 import { exportPdf } from '../export/pdf.ts';
 import { exportPng } from '../export/png.ts';
 import { exportSvg, type Background } from '../export/svg.ts';
+import { t } from '../i18n/index.ts';
 import { setState, toast, useStore } from '../model/store.ts';
 import { Modal } from './Modal.tsx';
 
@@ -25,10 +26,10 @@ export function ExportDialog() {
       if (format === 'svg') download(exportSvg(doc, bg), fileName(doc, 'svg'));
       else if (format === 'png') download(await exportPng(doc, size, bg), fileName(doc, 'png', `-${size}`));
       else download(await exportPdf(doc, story), fileName(doc, 'pdf'));
-      toast('Файл готов: проверьте папку «Загрузки»');
+      toast(t('export.done'));
       close();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Не удалось создать файл. Попробуйте ещё раз или выберите другой формат.');
+      setError(e instanceof Error ? e.message : t('export.failed'));
     } finally {
       setBusy(false);
     }
@@ -36,51 +37,51 @@ export function ExportDialog() {
 
   const empty = doc.layers.length === 0;
   return (
-    <Modal title="Скачать герб" onClose={close}>
-      {empty && <p class="warn">Герб пока пустой. Добавьте хотя бы один элемент.</p>}
+    <Modal title={t('export.title')} onClose={close}>
+      {empty && <p class="warn">{t('export.empty')}</p>}
       <div class="field">
-        <div class="field-label">Формат</div>
-        <div class="segmented" role="radiogroup" aria-label="Формат">
-          {([['png', 'PNG', 'картинка'], ['pdf', 'PDF', 'для печати'], ['svg', 'SVG', 'вектор']] as const).map(([id, name, note]) => (
+        <div class="field-label">{t('export.format')}</div>
+        <div class="segmented" role="radiogroup" aria-label={t('export.format')}>
+          {([['png', 'PNG'], ['pdf', 'PDF'], ['svg', 'SVG']] as const).map(([id, name]) => (
             <button key={id} type="button" role="radio" aria-checked={format === id} class={format === id ? 'on' : ''} onClick={() => setFormat(id)}>
               {name}
-              <small>{note}</small>
+              <small>{t(`export.${id}`)}</small>
             </button>
           ))}
         </div>
       </div>
       {format === 'png' && (
         <div class="field">
-          <label class="field-label" for="png-size">Размер</label>
+          <label class="field-label" for="png-size">{t('export.size')}</label>
           <select id="png-size" value={size} onChange={(e) => setSize(Number((e.target as HTMLSelectElement).value))}>
-            <option value={1024}>1024 × 1229 (для экрана)</option>
-            <option value={2048}>2048 × 2458 (для печати)</option>
-            <option value={4096}>4096 × 4915 (максимум)</option>
+            <option value={1024}>{t('export.size1024')}</option>
+            <option value={2048}>{t('export.size2048')}</option>
+            <option value={4096}>{t('export.size4096')}</option>
           </select>
         </div>
       )}
       {format !== 'pdf' && (
         <div class="field">
-          <label class="field-label" for="bg">Фон</label>
+          <label class="field-label" for="bg">{t('export.background')}</label>
           <select id="bg" value={bg} onChange={(e) => setBg((e.target as HTMLSelectElement).value as Background)}>
-            <option value="transparent">Прозрачный</option>
-            <option value="white">Белый</option>
-            {doc.background && <option value="canvas">Цвет холста</option>}
+            <option value="transparent">{t('export.bgTransparent')}</option>
+            <option value="white">{t('export.bgWhite')}</option>
+            {doc.background && <option value="canvas">{t('export.bgCanvas')}</option>}
           </select>
         </div>
       )}
       {format === 'pdf' && (
         <label class="check">
           <input type="checkbox" checked={story} onChange={(e) => setStory((e.target as HTMLInputElement).checked)} />
-          <span>Добавить рассказ о гербе: значения символов и ваши заметки</span>
+          <span>{t('export.story')}</span>
         </label>
       )}
-      {format === 'pdf' && <p class="hint">Страница A4: на первой странице герб, затем рассказ. Текст в PDF записан контурами, поэтому его нельзя выделить, зато он выглядит одинаково везде.</p>}
-      {format === 'svg' && <p class="hint">Векторный файл можно увеличивать без потери качества и открывать в графических редакторах.</p>}
+      {format === 'pdf' && <p class="hint">{t('export.pdfHint')}</p>}
+      {format === 'svg' && <p class="hint">{t('export.svgHint')}</p>}
       {error && <p class="warn" role="alert">{error}</p>}
       <div class="row end">
-        <button type="button" class="btn" onClick={close}>Отмена</button>
-        <button type="button" class="btn primary" disabled={busy || empty} onClick={run}>{busy ? 'Готовлю файл…' : 'Скачать'}</button>
+        <button type="button" class="btn" onClick={close}>{t('export.cancel')}</button>
+        <button type="button" class="btn primary" disabled={busy || empty} onClick={run}>{busy ? t('export.busy') : t('export.run')}</button>
       </div>
     </Modal>
   );

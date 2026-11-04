@@ -1,29 +1,23 @@
 import { useState } from 'preact/hooks';
 import type { Layer, ShieldLayer } from '../model/types.ts';
-import { CATALOG, CATEGORIES, type CatalogEntry, type Category } from '../data/catalog.ts';
-import { DIVISION_LIST, PATTERN_LIST, SHAPE_LIST } from '../data/names.ts';
-import { ORNAMENTS, ORNAMENT_IDS } from '../render/ornaments.ts';
+import type { CatalogEntry, Category } from '../data/catalog.ts';
+import { divisionList, patternList, shapeList } from '../data/names.ts';
+import { categoryTitle, ornamentMeaning, ornamentName, symbolCatalog } from '../i18n/data.ts';
+import { t } from '../i18n/index.ts';
+import { ORNAMENT_IDS } from '../render/ornaments.ts';
 import { addOrnament, addShield, addSymbol, addText, replaceSymbol, setState, updateLayer, useStore, type TabId } from '../model/store.ts';
 import { ColorField, DivisionThumb, OrnamentThumb, Prompts, Section, ShapeThumb, SymbolThumb } from './common.tsx';
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'shield', label: 'Щит' },
-  { id: 'work', label: 'Рабочие сферы' },
-  { id: 'animal', label: 'Животные' },
-  { id: 'nature', label: 'Природа' },
-  { id: 'symbol', label: 'Символы' },
-  { id: 'ornament', label: 'Орнаменты' },
-  { id: 'text', label: 'Текст' },
-];
+const TABS: TabId[] = ['shield', 'work', 'animal', 'nature', 'symbol', 'ornament', 'text'];
 
 export function AddPanel() {
   const tab = useStore((s) => s.tab);
   return (
     <div class="panel add-panel">
-      <div class="tabs" role="tablist" aria-label="Что добавить">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} class={tab === t.id ? 'on' : ''} onClick={() => setState({ tab: t.id })}>
-            {t.label}
+      <div class="tabs" role="tablist" aria-label={t('tab.label')}>
+        {TABS.map((id) => (
+          <button key={id} role="tab" type="button" aria-selected={tab === id} class={tab === id ? 'on' : ''} onClick={() => setState({ tab: id })}>
+            {t(`tab.${id}`)}
           </button>
         ))}
       </div>
@@ -47,9 +41,9 @@ function ShieldTab() {
   const target = shields.find((s) => s.id === selectedId) ?? shields[0];
   if (!target) {
     return (
-      <Section title="Щит">
-        <p class="hint">Щита пока нет. Можно начать с него или собирать герб из любых элементов без щита.</p>
-        <button type="button" class="btn primary" onClick={addShield}>Добавить щит</button>
+      <Section title={t('shield.title')}>
+        <p class="hint">{t('shield.none')}</p>
+        <button type="button" class="btn primary" onClick={addShield}>{t('shield.add')}</button>
       </Section>
     );
   }
@@ -60,12 +54,12 @@ function ShieldTab() {
     <>
       {shields.length > 1 && (
         <p class="hint">
-          Изменяется щит {shields.indexOf(target) + 1} из {shields.length}. Выберите другой на холсте или в «Слоях».
+          {t('shield.which', { n: shields.indexOf(target) + 1, total: shields.length })}
         </p>
       )}
-      <Section title="Форма">
+      <Section title={t('shield.shape')}>
         <div class="grid thumbs">
-          {SHAPE_LIST.map((s) => (
+          {shapeList().map((s) => (
             <button key={s.id} type="button" class={`thumb${target.shape === s.id ? ' on' : ''}`} aria-pressed={target.shape === s.id} title={s.name} onClick={() => set({ shape: s.id })}>
               <ShapeThumb shape={s.id} />
               <span>{s.name}</span>
@@ -73,9 +67,9 @@ function ShieldTab() {
           ))}
         </div>
       </Section>
-      <Section title="Деление на поля">
+      <Section title={t('shield.division')}>
         <div class="grid thumbs">
-          {DIVISION_LIST.map((d) => (
+          {divisionList().map((d) => (
             <button key={d.id} type="button" class={`thumb${target.division === d.id ? ' on' : ''}`} aria-pressed={target.division === d.id} title={d.name} onClick={() => set({ division: d.id })}>
               <DivisionThumb division={d.id} />
               <span>{d.name}</span>
@@ -83,24 +77,24 @@ function ShieldTab() {
           ))}
         </div>
       </Section>
-      <Section title="Цвета и узоры полей">
+      <Section title={t('shield.colors')}>
         {target.fields.map((f, i) => (
           <div class="card" key={i}>
-            {target.fields.length > 1 && <div class="card-title">Поле {i + 1}</div>}
-            <ColorField label="Цвет поля" value={f.color} meaning onChange={(v) => v && setField(i, { color: v }, `f${i}c`)} />
+            {target.fields.length > 1 && <div class="card-title">{t('shield.field', { n: i + 1 })}</div>}
+            <ColorField label={t('shield.fieldColor')} value={f.color} meaning onChange={(v) => v && setField(i, { color: v }, `f${i}c`)} />
             <div class="field">
-              <label class="field-label" for={`pat${i}`}>Узор</label>
+              <label class="field-label" for={`pat${i}`}>{t('shield.pattern')}</label>
               <select id={`pat${i}`} value={f.pattern ?? ''} onChange={(e) => setField(i, { pattern: ((e.target as HTMLSelectElement).value || null) as typeof f.pattern }, '')}>
-                <option value="">Без узора</option>
-                {PATTERN_LIST.map((p) => (
+                <option value="">{t('shield.noPattern')}</option>
+                {patternList().map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
-            {f.pattern && <ColorField label="Цвет узора" value={f.patternColor} onChange={(v) => v && setField(i, { patternColor: v }, `f${i}p`)} />}
+            {f.pattern && <ColorField label={t('shield.patternColor')} value={f.patternColor} onChange={(v) => v && setField(i, { patternColor: v }, `f${i}p`)} />}
           </div>
         ))}
-        <ColorField label="Цвет обводки и линий" value={target.outline} onChange={(v) => v && set({ outline: v }, 'outline')} />
+        <ColorField label={t('shield.outlineColor')} value={target.outline} onChange={(v) => v && set({ outline: v }, 'outline')} />
       </Section>
     </>
   );
@@ -117,10 +111,11 @@ function Catalog({ cat }: { cat: Category }) {
   const selected: Layer | undefined = doc.layers.find((l) => l.id === selectedId);
   const canReplace = selected?.kind === 'symbol';
   const q = query.trim().toLowerCase();
+  const catalog = symbolCatalog();
   const items = q
-    ? CATALOG.filter((e) => e.name.toLowerCase().includes(q) || e.meaning.toLowerCase().includes(q))
-    : CATALOG.filter((e) => e.cat === cat);
-  const title = q ? `Найдено: ${items.length}` : CATEGORIES.find((c) => c.id === cat)!.title;
+    ? catalog.filter((e) => e.name.toLowerCase().includes(q) || e.meaning.toLowerCase().includes(q))
+    : catalog.filter((e) => e.cat === cat);
+  const title = q ? t('catalog.found', { n: items.length }) : categoryTitle(cat);
 
   const pick = (e: CatalogEntry) => {
     if (canReplace && replaceMode) {
@@ -134,12 +129,12 @@ function Catalog({ cat }: { cat: Category }) {
   return (
     <>
       <div class="search">
-        <input type="search" placeholder="Поиск по названию и значению" aria-label="Поиск символов" value={query} onInput={(e) => setQuery((e.target as HTMLInputElement).value)} />
+        <input type="search" placeholder={t('catalog.search')} aria-label={t('catalog.searchLabel')} value={query} onInput={(e) => setQuery((e.target as HTMLInputElement).value)} />
       </div>
       {canReplace && (
-        <div class="segmented" role="group" aria-label="Что делает нажатие на символ">
-          <button type="button" class={!replaceMode ? 'on' : ''} aria-pressed={!replaceMode} onClick={() => setState({ replace: false })}>Добавить новый</button>
-          <button type="button" class={replaceMode ? 'on' : ''} aria-pressed={replaceMode} onClick={() => setState({ replace: true })}>Заменить выбранный</button>
+        <div class="segmented" role="group" aria-label={t('catalog.modeLabel')}>
+          <button type="button" class={!replaceMode ? 'on' : ''} aria-pressed={!replaceMode} onClick={() => setState({ replace: false })}>{t('catalog.modeAdd')}</button>
+          <button type="button" class={replaceMode ? 'on' : ''} aria-pressed={replaceMode} onClick={() => setState({ replace: true })}>{t('catalog.modeReplace')}</button>
         </div>
       )}
       <Section title={title}>
@@ -159,16 +154,16 @@ function Catalog({ cat }: { cat: Category }) {
             </button>
           ))}
         </div>
-        {items.length === 0 && <p class="hint">Ничего не найдено. Попробуйте другое слово.</p>}
+        {items.length === 0 && <p class="hint">{t('catalog.empty')}</p>}
       </Section>
       <div class="infobar" aria-live="polite">
         {info ? (
           <>
             <b>{info.name}</b>
-            <span>Может означать: {info.meaning}.</span>
+            <span>{t('meaning.prefix', { text: info.meaning })}</span>
           </>
         ) : (
-          <span>Нажмите на символ, чтобы добавить его на герб. Значение появится здесь, а потом в свойствах.</span>
+          <span>{t('catalog.infoDefault')}</span>
         )}
       </div>
     </>
@@ -179,16 +174,16 @@ function Catalog({ cat }: { cat: Category }) {
 
 function OrnamentTab() {
   return (
-    <Section title="Орнаменты и украшения">
+    <Section title={t('ornaments.title')}>
       <div class="grid thumbs ornaments">
         {ORNAMENT_IDS.map((id) => (
-          <button key={id} type="button" class="thumb" title={`${ORNAMENTS[id].name}: ${ORNAMENTS[id].meaning}`} onClick={() => addOrnament(id)}>
+          <button key={id} type="button" class="thumb" title={`${ornamentName(id)}: ${ornamentMeaning(id)}`} onClick={() => addOrnament(id)}>
             <OrnamentThumb id={id} />
-            <span>{ORNAMENTS[id].name}</span>
+            <span>{ornamentName(id)}</span>
           </button>
         ))}
       </div>
-      <p class="hint">Венки, лучи, кольца и рамка добавляются под щит, остальное поверх.</p>
+      <p class="hint">{t('ornaments.hint')}</p>
     </Section>
   );
 }
@@ -200,13 +195,13 @@ function TextTab() {
     setText('');
   };
   return (
-    <Section title="Девиз или название">
+    <Section title={t('text.title')}>
       <div class="field">
-        <label class="field-label" for="new-text">Текст</label>
-        <input id="new-text" type="text" maxLength={60} placeholder="Например: Вместе мы сильнее" value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} onKeyDown={(e) => e.key === 'Enter' && add()} />
+        <label class="field-label" for="new-text">{t('text.label')}</label>
+        <input id="new-text" type="text" maxLength={60} placeholder={t('text.placeholder')} value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} onKeyDown={(e) => e.key === 'Enter' && add()} />
       </div>
-      <button type="button" class="btn primary" onClick={add}>Добавить надпись</button>
-      <p class="hint">Форму надписи (на ленте, по дуге, прямо), шрифт и цвет можно изменить после добавления.</p>
+      <button type="button" class="btn primary" onClick={add}>{t('text.add')}</button>
+      <p class="hint">{t('text.hint')}</p>
     </Section>
   );
 }

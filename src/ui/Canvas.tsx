@@ -3,6 +3,7 @@ import type { Layer } from '../model/types.ts';
 import { CANVAS_H, CANVAS_W } from '../model/types.ts';
 import { attachSymbol, detachSymbol, findLayer, layerBox, nearestSlot, resolveSymbol } from '../model/doc.ts';
 import { commit, getState, select, setState, updateLayer, useStore } from '../model/store.ts';
+import { t } from '../i18n/index.ts';
 import { renderBody } from '../render/renderCrest.ts';
 
 type Gesture =
@@ -166,7 +167,7 @@ export function Canvas() {
       class="canvas"
       viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
       role="application"
-      aria-label="Холст с гербом"
+      aria-label={t('canvas.label')}
       onPointerDown={onDown}
       onPointerMove={onMove}
       onPointerUp={onUp}
